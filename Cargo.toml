@@ -1,0 +1,8 @@
+[package]
+name = "kalk"
+version = "0.1.0"
+authors = ["Yichuan Shen <shen.yichuan@gmail.com>"]
+
+[dependencies]
+pest = "1.0"
+pest_derive = "1.0"
