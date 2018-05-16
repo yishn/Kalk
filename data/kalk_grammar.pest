@@ -1,0 +1,23 @@
+document = {soi ~ (statement ~ (newline+ | &eoi))* ~ eoi}
+
+statement = {assignment}
+assignment = {identifier ~ ":=" ~ expr}
+
+expr = {
+    math_expr
+    | atomic_expr
+}
+
+atomic_expr = {"(" ~ expr ~ ")" | identifier | literal}
+math_expr = {(sum | prod | exp)}
+sum = {(prod | exp | atomic_expr) ~ ("+" ~ (prod | exp | atomic_expr))+}
+prod = {(exp | atomic_expr) ~ ("*"? ~ (exp | atomic_expr))+}
+exp = {atomic_expr ~ ("^" ~ atomic_expr)+}
+
+identifier = {('a'..'z' | 'A'..'Z')+}
+literal = {number}
+number = @{('0'..'9')+ ~ ("." ~ ('0'..'9')+)?}
+
+comment = @{"--" ~ (!newline ~ any)*}
+newline = _{"\r\n" | "\n\r" | "\n" | "\r"}
+whitespace = _{" " | "\t"}

@@ -1,0 +1,28 @@
+D := [0, 0, -2]
+E := [2, 0, 0]
+F := [2, 2, 0]
+H := [0, 0, 0]
+
+G := H + F - E
+A := E + H - D
+B := F + H - D
+C := G + H - D
+
+norm(v) := sqrt(sum {v[i]^2 | i in {1, ..., #v}})
+
+P(t) := F + t(B - F) if 0 <= t <= 1
+P(t) := 0
+
+q1(t) := norm(P(t) - H) - 3
+
+--
+
+A := [-2, 1, 4]
+B := [-4, 0, 6]
+
+q2(C) := norm(C - A) - 2 * norm(B - A)
+
+g(t) := A + t(B - A)
+h(P, D, t) := P + tD
+
+q3(P, D) := (D * (B - A), D * (P - A), norm(P - A) - 3)
