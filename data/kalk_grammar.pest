@@ -1,23 +1,29 @@
 document = {soi ~ (statement ~ (newline+ | &eoi))* ~ eoi}
 
 statement = {assignment}
-assignment = {identifier ~ ":=" ~ expr}
+assignment = {identifier ~ &":=" ~ operator ~ expr}
 
-expr = {
-    math_expr
-    | atomic_expr
+expr = {math_expr | atomic_expr}
+math_expr = _{sum | prod | negate | exp}
+atomic_expr = _{"(" ~ expr ~ ")" | identifier | literal}
+
+sum = {(prod | negate | exp | atomic_expr) ~ (&("+" | "-") ~ operator ~ (prod | exp | atomic_expr))+}
+prod = {
+    (negate | exp | atomic_expr) ~ (
+        &("*" | "/") ~ operator ~ (negate | exp | atomic_expr)
+        | (exp | atomic_expr)
+    )+
 }
+negate = {"-" ~ (exp | atomic_expr)}
+exp = {atomic_expr ~ (&"^" ~ operator ~ (negate | exp | atomic_expr))+}
 
-atomic_expr = {"(" ~ expr ~ ")" | identifier | literal}
-math_expr = {(sum | prod | exp)}
-sum = {(prod | exp | atomic_expr) ~ ("+" ~ (prod | exp | atomic_expr))+}
-prod = {(exp | atomic_expr) ~ ("*"? ~ (exp | atomic_expr))+}
-exp = {atomic_expr ~ ("^" ~ atomic_expr)+}
-
-identifier = {('a'..'z' | 'A'..'Z')+}
+operator = {":=" | "=" | "<" | ">" | "<=" | ">=" | "!=" | "!" | "&&" | "||" | "+" | "-" | "*" | "/" | "^"}
+identifier = @{alpha ~ (alpha | digit | "_")*}
 literal = {number}
-number = @{('0'..'9')+ ~ ("." ~ ('0'..'9')+)?}
+number = @{digit+ ~ ("." ~ digit+)?}
 
-comment = @{"--" ~ (!newline ~ any)*}
+digit = _{'0'..'9'}
+alpha = _{'a'..'z' | 'A'..'Z'}
+comment = _{"--" ~ (!newline ~ any)*}
 newline = _{"\r\n" | "\n\r" | "\n" | "\r"}
 whitespace = _{" " | "\t"}
