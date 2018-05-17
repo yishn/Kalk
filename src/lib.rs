@@ -6,7 +6,7 @@ pub mod parser;
 
 #[test]
 fn parse_simple_statement() {
-    for pair in parser::parse("y := 2 x y").unwrap() {
+    for pair in parser::parse("y := -e^(-2x)").unwrap() {
         println!("{}", pair);
     }
 }
