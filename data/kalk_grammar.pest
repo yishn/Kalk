@@ -1,11 +1,14 @@
 document = {soi ~ (statement ~ (newline+ | &eoi))* ~ eoi}
 
-statement = {assignment}
-assignment = {identifier ~ &":=" ~ operator ~ expr}
+// Statements
 
-expr = {math_expr | atomic_expr}
-math_expr = _{sum | prod | negate | exp}
-atomic_expr = _{"(" ~ expr ~ ")" | identifier | literal}
+statement = {assignment | condition}
+assignment = {identifier ~ &":=" ~ operator ~ expression}
+
+// Expressions
+
+expression = {sum | prod | negate | exp | atomic_expr}
+atomic_expr = _{"(" ~ expression ~ ")" | identifier | literal}
 
 sum = {(prod | negate | exp | atomic_expr) ~ (&("+" | "-") ~ operator ~ (prod | exp | atomic_expr))+}
 prod = {
@@ -17,10 +20,30 @@ prod = {
 negate = {"-" ~ (exp | atomic_expr)}
 exp = {atomic_expr ~ (&"^" ~ operator ~ (negate | exp | atomic_expr))+}
 
-operator = {":=" | "=" | "<" | ">" | "<=" | ">=" | "!=" | "!" | "&&" | "||" | "+" | "-" | "*" | "/" | "^"}
+// Conditions
+
+condition = {or | and | compare | not | atomic_cond}
+atomic_cond = _{"(" ~ condition ~ ")"}
+
+or = {(and | compare | not | atomic_cond) ~ (&"||" ~ operator ~ (and | compare | not | atomic_cond))+}
+and = {(compare | not | atomic_cond) ~ (&"&&" ~ operator ~ (compare | not | atomic_cond))+}
+compare = {expression ~ (&compare_op ~ operator ~ expression)+}
+not = {&"!" ~ operator ~ atomic_cond}
+
+// Operators
+
+operator = {compare_op | logical_op | arithm_op | ":=" | "#"}
+compare_op = _{"=" | "!=" | "<" | ">" | "<=" | ">="}
+logical_op = _{"!" | "&&" | "||"}
+arithm_op = _{"+" | "-" | "*" | "/" | "^"}
+
+// Literals
+
 identifier = @{alpha ~ (alpha | digit | "_")*}
 literal = {number}
 number = @{digit+ ~ ("." ~ digit+)?}
+
+// Basics
 
 digit = _{'0'..'9'}
 alpha = _{'a'..'z' | 'A'..'Z'}

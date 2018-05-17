@@ -8,6 +8,12 @@ const _GRAMMAR: &str = include_str!("../data/kalk_grammar.pest");
 #[grammar = "../data/kalk_grammar.pest"]
 struct KalkParser;
 
-pub fn parse(input: &str) -> Result<Pairs<Rule>, PestError<Rule>> {
-    KalkParser::parse(Rule::document, input)
+pub type PestResult<'a, T> = Result<T, PestError<'a, Rule>>;
+
+pub fn parse(input: &str) -> PestResult<Pairs<Rule>> {
+    parse_rule(Rule::document, input)
+}
+
+pub fn parse_rule(rule: Rule, input: &str) -> PestResult<Pairs<Rule>> {
+    KalkParser::parse(rule, input)
 }
