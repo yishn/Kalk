@@ -10,7 +10,5 @@ pub use state::State;
 
 #[test]
 fn parse_simple_statement() {
-    for pair in parser::parse_rule(parser::Rule::document, "y := -e^-x^2").unwrap() {
-        println!("{}", pair);
-    }
+    println!("{:#?}", parser::parse_rule(parser::Rule::document, "y := -x^5 + (2x)^3 + 5").unwrap());
 }

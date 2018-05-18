@@ -2,33 +2,58 @@ document = {soi ~ (statement ~ (newline+ | &eoi))* ~ eoi}
 
 // Statements
 
-statement = {assignment | condition}
-assignment = {identifier ~ &":=" ~ operator ~ expression}
+statement = _{assignment_stm}
+assignment_stm = {identifier ~ &":=" ~ operator ~ expression}
 
 // Expressions
 
-expression = {sum | prod | negate | exp | atomic_expr}
-atomic_expr = _{"(" ~ expression ~ ")" | identifier | literal}
+expression = _{sum_expr | prod_expr | negate_expr | exp_expr | atomic_expr}
 
-sum = {(prod | negate | exp | atomic_expr) ~ (&("+" | "-") ~ operator ~ (prod | exp | atomic_expr))+}
-prod = {
-    (negate | exp | atomic_expr) ~ (
-        &("*" | "/") ~ operator ~ (negate | exp | atomic_expr)
-        | (exp | atomic_expr)
+sum_expr = {
+    (prod_expr | negate_expr | exp_expr | atomic_expr)
+    ~ (&("+" | "-") ~ operator ~ (prod_expr | exp_expr | atomic_expr))+
+}
+
+prod_expr = {
+    (negate_expr | exp_expr | atomic_expr) ~ (
+        &("*" | "/") ~ operator ~ (negate_expr | exp_expr | atomic_expr)
+        | (exp_expr | atomic_expr)
     )+
 }
-negate = {"-" ~ (exp | atomic_expr)}
-exp = {atomic_expr ~ (&"^" ~ operator ~ (negate | exp | atomic_expr))+}
+
+negate_expr = {
+    "-" ~ (exp_expr | atomic_expr)
+}
+
+exp_expr = {
+    atomic_expr ~ 
+    (&"^" ~ operator ~ (negate_expr | exp_expr | atomic_expr))+
+}
+
+atomic_expr = _{"(" ~ expression ~ ")" | identifier | literal}
 
 // Conditions
 
-condition = {or | and | compare | not | atomic_cond}
-atomic_cond = _{"(" ~ condition ~ ")"}
+condition = _{or_cond | and_cond | compare_cond | not_cond | atomic_cond}
 
-or = {(and | compare | not | atomic_cond) ~ (&"||" ~ operator ~ (and | compare | not | atomic_cond))+}
-and = {(compare | not | atomic_cond) ~ (&"&&" ~ operator ~ (compare | not | atomic_cond))+}
-compare = {expression ~ (&compare_op ~ operator ~ expression)+}
-not = {&"!" ~ operator ~ atomic_cond}
+or_cond = {
+    (and_cond | compare_cond | not_cond | atomic_cond)
+    ~ (&"||" ~ operator ~ (and_cond | compare_cond | not_cond | atomic_cond))+
+}
+
+and_cond = {
+    (compare_cond | not_cond | atomic_cond)
+    ~ (&"&&" ~ operator ~ (compare_cond | not_cond | atomic_cond))+
+}
+
+compare_cond = {
+    expression
+    ~ (&compare_op ~ operator ~ expression)+
+}
+
+not_cond = {&"!" ~ operator ~ atomic_cond}
+
+atomic_cond = _{"(" ~ condition ~ ")"}
 
 // Operators
 
