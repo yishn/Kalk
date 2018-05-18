@@ -1,12 +1,21 @@
 use std::collections::HashMap;
-use types::Expression;
+use parser::{Tree, Content};
+use types::Error;
 
-pub struct State<'a> {
-    variables: HashMap<&'a str, Expression<'a>>
+pub struct State {
+    vars: HashMap<String, Tree>
 }
 
-impl<'a> State<'a> {
-    pub fn new() -> State<'a> {
-        State {variables: HashMap::new()}
+impl State {
+    pub fn new() -> State {
+        State {vars: HashMap::new()}
+    }
+
+    pub fn set_var(&mut self, varname: String, expr: Tree) {
+        self.vars.insert(varname, expr);
+    }
+
+    pub fn resolve_var(&self, varname: &str) -> Result<Tree, Error> {
+        Err(Error::ResolveError)
     }
 }
