@@ -2,8 +2,11 @@ document = {soi ~ (statement ~ (newline+ | &eoi))* ~ eoi}
 
 // Statements
 
-statement = _{assignment_stm}
+statement = _{assignment_stm | expression_stm | condition_stm}
+
 assignment_stm = {identifier ~ &":=" ~ operator ~ expression}
+expression_stm = {expression}
+condition_stm = {condition}
 
 // Expressions
 
@@ -65,8 +68,8 @@ arithm_op = _{"+" | "-" | "*" | "/" | "^"}
 // Literals
 
 identifier = @{alpha ~ (alpha | digit | "_")*}
-literal = {number}
-number = @{digit+ ~ ("." ~ digit+)?}
+literal = _{number_lit}
+number_lit = @{digit+ ~ ("." ~ digit+)?}
 
 // Basics
 

@@ -10,5 +10,15 @@ pub use state::State;
 
 #[test]
 fn parse_simple_statement() {
-    println!("{:#?}", parser::parse_rule(parser::Rule::document, "y := -x^5 + (2x)^3 + 5").unwrap());
+    let mut state = State::new();
+    let trees = parser::parse_rule(parser::Rule::expression, "-x^5 + 2*x^3 + 5").unwrap();
+
+    state.set_var("x".to_string(), parser::Tree {
+        rule: parser::Rule::number_lit,
+        text: "2".to_string(),
+        children: vec![]
+    });
+
+    println!("{:#?}", trees[0]);
+    println!("{:#?}", state.resolve_expression(&trees[0]));
 }
