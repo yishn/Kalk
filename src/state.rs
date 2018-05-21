@@ -1,18 +1,28 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use types::{Value, Error};
 use parser::{Rule, Tree};
 
 pub struct State {
-    vars: HashMap<String, Tree>
+    pub vars: HashMap<String, Tree>,
+    cache: RefCell<HashMap<String, Value>>
 }
 
 impl State {
     pub fn new() -> State {
-        State {vars: HashMap::new()}
+        State {
+            vars: HashMap::new(),
+            cache: RefCell::new(HashMap::new())
+        }
     }
 
     pub fn set_var(&mut self, varname: String, expr: Tree) {
+        self.cache.replace(HashMap::new());
         self.vars.insert(varname, expr);
+    }
+
+    pub fn cache_var(&self, varname: String, value: Value) {
+        self.cache.borrow_mut().insert(varname, value);
     }
 
     pub fn resolve_expression(&self, expr: &Tree) -> Result<Value, Error> {
@@ -54,9 +64,19 @@ impl State {
                 .exp(&self.resolve_expression(&expr.children[2])?)
             },
             Rule::negate_expr => self.resolve_expression(&expr.children[0])?.negate(),
-            Rule::identifier => match self.vars.get(&expr.text) {
-                Some(expr) => self.resolve_expression(expr),
-                None => Err(Error::ResolveError)
+            Rule::identifier => {
+                if let Some(value) = self.cache.borrow().get(&expr.text) {
+                    return Ok(value.clone());
+                }
+
+                let result = match self.vars.get(&expr.text) {
+                    Some(expr) => self.resolve_expression(expr),
+                    None => Err(Error::ResolveError)
+                };
+
+                self.cache.borrow_mut().insert(expr.text.clone(), result.clone()?);
+
+                result
             },
             Rule::number_lit => match expr.text.parse::<f64>() {
                 Ok(x) => Ok(Value::Number(x)),
