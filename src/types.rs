@@ -3,10 +3,12 @@ use self::Value::*;
 
 #[derive(Debug)]
 pub enum Error {
-    ResolveError,
-    ArithmeticError
+    ArithmeticError,
+    DefinitionError,
+    ResolveError
 }
 
+#[derive(Clone)]
 pub enum Value {
     Number(f64),
     Matrix(Vec<Value>, usize)
@@ -23,7 +25,7 @@ impl fmt::Debug for Value {
                 result.push('[');
 
                 for i in 0..height {
-                    if i > 0 && i < height - 1 {
+                    if i > 0 {
                         result.push_str(match f.alternate() {
                             true => ";\n ",
                             false => "; "
@@ -31,7 +33,7 @@ impl fmt::Debug for Value {
                     }
 
                     for j in 0..width {
-                        if j > 0 && i < width - 1 {
+                        if j > 0 {
                             result.push_str(", ");
                         }
 
@@ -54,7 +56,7 @@ impl Value {
             &Matrix(ref data, width) => match (width, data.len()) {
                 (0, _) => (0, 0),
                 (_, 0) => (0, 0),
-                (width, len) => (width, len / width)
+                (width, len) => (len / width, width)
             }
         }
     }
@@ -109,24 +111,23 @@ impl Value {
             (&Matrix(_, inner), &Matrix(_, _)) if inner == 0 => Ok(Matrix(vec![], 0)),
             (&Matrix(ref a, inner), &Matrix(ref b, width)) if inner == other.size().0 => {
                 let height = self.size().0;
-                let data = (0..width * height)
-                    .try_fold(vec![], |mut acc, index| {
-                        let (i, j) = (index / width, index % width);
+                let data = (0..width * height).try_fold(vec![], |mut acc, index| {
+                    let (i, j) = (index / width, index % width);
 
-                        acc.push(
-                            (0..inner)
-                            .try_fold(None, |acc: Option<Value>, k| {
-                                let value = a[i * inner + k].mul(&b[k * inner + j])?;
-                                match acc {
-                                    Some(x) => Ok(Some(x.add(&value)?)),
-                                    None => Ok(Some(value))
-                                }
-                            })?
-                            .unwrap()
-                        );
+                    acc.push(
+                        (0..inner)
+                        .try_fold(None, |acc: Option<Value>, k| {
+                            let value = a[i * inner + k].mul(&b[k * width + j])?;
+                            match acc {
+                                Some(x) => Ok(Some(x.add(&value)?)),
+                                None => Ok(Some(value))
+                            }
+                        })?
+                        .unwrap()
+                    );
 
-                        Ok(acc)
-                    })?;
+                    Ok(acc)
+                })?;
 
                 Ok(Matrix(data, width))
             },

@@ -11,7 +11,7 @@ pub use state::State;
 #[test]
 fn parse_simple_statement() {
     let mut state = State::new();
-    let trees = parser::parse_rule(parser::Rule::expression, "-x^5 + 2*x^3 + 5").unwrap();
+    let trees = parser::parse_rule(parser::Rule::expression, "[0, 1; 1, x; 1, 0] * [1, 0, 0; 0, 1, 0]").unwrap();
 
     state.set_var("x".to_string(), parser::Tree {
         rule: parser::Rule::number_lit,

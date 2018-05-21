@@ -62,6 +62,32 @@ impl State {
                 Ok(x) => Ok(Value::Number(x)),
                 Err(_) => Err(Error::ResolveError)
             },
+            Rule::matrix_lit => {
+                let rows = &expr.children;
+                let height = rows.len();
+
+                if height == 0 {
+                    return Ok(Value::Matrix(vec![], 0));
+                }
+
+                let width = rows[0].children.len();
+
+                if rows.iter().any(|row| {
+                    row.rule != Rule::matrix_row_lit
+                    || row.children.len() != width
+                }) {
+                    return Err(Error::DefinitionError);
+                }
+
+                let data = rows.iter()
+                    .flat_map(|row| row.children.iter())
+                    .try_fold(vec![], |mut acc, x| {
+                        acc.push(self.resolve_expression(x)?);
+                        Ok(acc)
+                    })?;
+
+                Ok(Value::Matrix(data, width))
+            },
             _ => Err(Error::ResolveError)
         }
     }
