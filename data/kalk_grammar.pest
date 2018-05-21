@@ -68,8 +68,10 @@ arithm_op = _{"+" | "-" | "*" | "/" | "^"}
 // Literals
 
 identifier = @{alpha ~ (alpha | digit | "_")*}
-literal = _{number_lit}
+literal = _{number_lit | matrix_lit}
 number_lit = @{digit+ ~ ("." ~ digit+)?}
+matrix_lit = {"[" ~ (matrix_row_lit ~ (";" | &"]"))* ~ "]"}
+matrix_row_lit = {(expression ~ ",")* ~ expression ~ &(";" | "]")}
 
 // Basics
 
