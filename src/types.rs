@@ -1,55 +1,30 @@
 use std::fmt;
+use std::slice::Iter;
 use self::Value::*;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum Error {
     ArithmeticError,
     DefinitionError,
     ResolveError
 }
 
-#[derive(Clone)]
+// Values
+
+#[derive(Clone, PartialEq)]
 pub enum Value {
     Number(f64),
     Matrix(Vec<Value>, usize)
 }
 
-impl fmt::Debug for Value {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+impl Value {
+    pub fn is_number(&self) -> bool {
         match self {
-            &Number(a) => write!(f, "{}", a),
-            &Matrix(ref data, _) => {
-                let (height, width) = self.size();
-                let mut result = String::new();
-
-                result.push('[');
-
-                for i in 0..height {
-                    if i > 0 {
-                        result.push_str(match f.alternate() {
-                            true => ";\n ",
-                            false => "; "
-                        });
-                    }
-
-                    for j in 0..width {
-                        if j > 0 {
-                            result.push_str(", ");
-                        }
-
-                        result.push_str(&format!("{:?}", data[i * width + j]))
-                    }
-                }
-
-                result.push(']');
-
-                write!(f, "{}", result)
-            }
+            &Number(_) => true,
+            _ => false
         }
     }
-}
 
-impl Value {
     pub fn size(&self) -> (usize, usize) {
         match self {
             &Number(_) => (1, 1),
@@ -111,20 +86,24 @@ impl Value {
             (&Matrix(_, inner), &Matrix(_, _)) if inner == 0 => Ok(Matrix(vec![], 0)),
             (&Matrix(ref a, inner), &Matrix(ref b, width)) if inner == other.size().0 => {
                 let height = self.size().0;
-                let data = (0..width * height).try_fold(vec![], |mut acc, index| {
-                    let (i, j) = (index / width, index % width);
 
-                    acc.push(
-                        (0..inner)
-                        .try_fold(None, |acc: Option<Value>, k| {
-                            let value = a[i * inner + k].mul(&b[k * width + j])?;
-                            match acc {
-                                Some(x) => Ok(Some(x.add(&value)?)),
-                                None => Ok(Some(value))
-                            }
-                        })?
-                        .unwrap()
-                    );
+                let data = (0..height).try_fold(vec![], |mut acc, i| {
+                    acc.append(&mut (0..width).try_fold(vec![], |mut acc, j| {
+                        acc.push(
+                            (0..inner)
+                            .try_fold(None, |acc: Option<Value>, k| {
+                                let value = a[i * inner + k].mul(&b[k * width + j])?;
+
+                                match acc {
+                                    Some(x) => Ok(Some(x.add(&value)?)),
+                                    None => Ok(Some(value))
+                                }
+                            })?
+                            .unwrap()
+                        );
+
+                        Ok(acc)
+                    })?);
 
                     Ok(acc)
                 })?;
@@ -149,3 +128,85 @@ impl Value {
         }
     }
 }
+
+impl fmt::Debug for Value {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match self {
+            &Number(a) => write!(f, "{}", a),
+            &Matrix(ref data, _) => {
+                let (height, width) = self.size();
+                let mut result = String::new();
+
+                result.push('[');
+
+                for i in 0..height {
+                    if i > 0 {
+                        result.push_str(match f.alternate() {
+                            true => ";\n ",
+                            false => "; "
+                        });
+                    }
+
+                    for j in 0..width {
+                        if j > 0 {
+                            result.push_str(", ");
+                        }
+
+                        result.push_str(&format!("{:?}", data[i * width + j]))
+                    }
+                }
+
+                result.push(']');
+
+                write!(f, "{}", result)
+            }
+        }
+    }
+}
+
+// Sets
+
+pub enum SetSize {
+    Finite(usize),
+    Infinite
+}
+
+pub trait Set {
+    fn card(&self) -> SetSize;
+}
+
+pub trait IterableSet<'a> {
+    fn iter(&'a self) -> Box<Iterator<Item = &'a Value> + 'a>;
+}
+
+pub trait QueryableSet {
+    fn contains(&self, &Value) -> bool;
+}
+
+pub struct FiniteSet(Vec<Value>);
+
+impl Set for FiniteSet {
+    fn card(&self) -> SetSize {
+        SetSize::Finite(self.0.len())
+    }
+}
+
+impl<'a> IterableSet<'a> for FiniteSet {
+    fn iter(&'a self) -> Box<Iterator<Item = &'a Value> + 'a> {
+        Box::new(self.0.iter())
+    }
+}
+
+impl QueryableSet for FiniteSet {
+    fn contains(&self, value: &Value) -> bool {
+        self.0.contains(value)
+    }
+}
+
+pub struct Range(Value, Value, Value);
+
+// impl<'a> IterableSet<'a> for Range {
+//     fn iter(&'a self) -> Box<Iterator<Item = &'a Value> + 'a> {
+//         Box::new((0..).map(|x| Number(x as f64)))
+//     }
+// }
