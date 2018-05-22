@@ -1,5 +1,4 @@
 use std::fmt;
-use std::slice::Iter;
 use self::Value::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -175,8 +174,8 @@ pub trait Set {
     fn card(&self) -> SetSize;
 }
 
-pub trait IterableSet<'a> {
-    fn iter(&'a self) -> Box<Iterator<Item = &'a Value> + 'a>;
+pub trait IterableSet {
+    fn index(&self, usize) -> Option<Value>;
 }
 
 pub trait QueryableSet {
@@ -191,9 +190,9 @@ impl Set for FiniteSet {
     }
 }
 
-impl<'a> IterableSet<'a> for FiniteSet {
-    fn iter(&'a self) -> Box<Iterator<Item = &'a Value> + 'a> {
-        Box::new(self.0.iter())
+impl IterableSet for FiniteSet {
+    fn index(&self, i: usize) -> Option<Value> {
+        self.0.get(i).cloned()
     }
 }
 
@@ -203,10 +202,30 @@ impl QueryableSet for FiniteSet {
     }
 }
 
-pub struct Range(Value, Value, Value);
+pub struct ArithmeticProgression(f64, f64);
 
-// impl<'a> IterableSet<'a> for Range {
-//     fn iter(&'a self) -> Box<Iterator<Item = &'a Value> + 'a> {
-//         Box::new((0..).map(|x| Number(x as f64)))
-//     }
-// }
+impl Set for ArithmeticProgression {
+    fn card(&self) -> SetSize {
+        SetSize::Infinite
+    }
+}
+
+impl IterableSet for ArithmeticProgression {
+    fn index(&self, i: usize) -> Option<Value> {
+        let result = (|| Number(self.0).add(&Number(i as f64).mul(&Number(self.1))?))();
+
+        match result {
+            Ok(x) => Some(x),
+            Err(_) => None
+        }
+    }
+}
+
+impl QueryableSet for ArithmeticProgression {
+    fn contains(&self, value: &Value) -> bool {
+        match value.sub(&Number(self.0)) {
+            Ok(Number(x)) => x % self.1 == 0.0,
+            _ => false
+        }
+    }
+}
