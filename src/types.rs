@@ -202,11 +202,29 @@ impl QueryableSet for FiniteSet {
     }
 }
 
-pub struct ArithmeticProgression(f64, f64);
+pub struct ArithmeticProgression(f64, f64, Option<f64>);
+
+impl ArithmeticProgression {
+    fn new_finite(start: f64, step: f64, stop: f64) -> ArithmeticProgression {
+        ArithmeticProgression(start, step, Some(stop))
+    }
+
+    fn new_infinite(start: f64, step: f64) -> ArithmeticProgression {
+        ArithmeticProgression(start, step, None)
+    }
+}
 
 impl Set for ArithmeticProgression {
     fn card(&self) -> SetSize {
-        SetSize::Infinite
+        match self.2 {
+            None => SetSize::Infinite,
+            Some(stop) => SetSize::Finite(
+                (0..)
+                .map(|i| self.0 + (i as f64) * self.1)
+                .take_while(|&x| x <= stop)
+                .count()
+            )
+        }
     }
 }
 
